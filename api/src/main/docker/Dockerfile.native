@@ -14,31 +14,33 @@
 # docker run -i --rm -p 8080:8080 barais/doodleback-with-quarkus
 #
 ###
+# Étape 1 : Build natif avec Maven et GraalVM
+FROM quay.io/quarkus/ubi-quarkus-native-image:22.3-java17 AS build
+WORKDIR /project
+
+# Exécuter en root pour pouvoir installer des paquets
+USER root
+
+# Installer Maven et nettoyer le cache
+RUN microdnf install -y maven \
+    && microdnf clean all
+
+# Copier le pom et les fichiers nécessaires, pré-télécharger les dépendances
+COPY ./pom.xml .
+COPY ./.mvn .mvn
+RUN mvn -B dependency:go-offline
+
+# Copier le code source et builder en natif
+COPY . .
+RUN mvn -B package -Pnative -Dquarkus.native.container-build=true
+
+# Étape 2 : Image finale minimaliste
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8
 WORKDIR /work/
 RUN chown 1001 /work \
     && chmod "g+rwX" /work \
     && chown 1001:root /work
-COPY --chown=1001:root target/*-runner /work/application
-
+COPY --chown=1001:root --from=build /project/target/*-runner /work/application
 EXPOSE 8080
 USER 1001
-
-# ENV quarkus_datasource_jdbc_url "jdbc:mysql://db:3306/tlc?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&createDatabaseIfNotExist=true&serverTimezone=Europe/Paris"
-# ENV quarkus_datasource_username tlc
-# ENV quarkus_datasource_password tlc
-# ENV quarkus_hibernate_orm_database_generation update
-# ENV quarkus_mailer_from olivier.barais@gmail.com
-# ENV quarkus_mailer_host localhost
-# ENV quarkus_mailer_port 2525
-# ENV quarkus_mailer_ssl false
-# ENV quarkus_mailer_username ""
-# ENV quarkus_mailer_password ""
-# ENV quarkus_mailer_mock true
-# ENV doodle_usepad false
-# ENV doodle_padUrl http://etherpad:9001/
-# ENV doodle_padApiKey "changeit"
-# ENV doodle_organizermail "olivier.barais@gmail.com"
-
-
 CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]

@@ -32,7 +32,8 @@
     "primeng": "16.2.0",
     "rxjs": "7.8.1",
     "tslib": "2.6.2",
-    "zone.js": "0.13.1"
+    "zone.js": "0.13.1",
+    "@popperjs/core": "^2.11.8"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "16.2.0",
