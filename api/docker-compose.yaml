@@ -54,3 +54,67 @@ services:
       - etherpad
       - mail
     restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana-oss:9.5.2
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+  mysqld-exporter:
+    image: prom/mysqld-exporter:latest
+    environment:
+      - DATA_SOURCE_NAME=tlc:tlc@(db:3306)/
+    restart: unless-stopped
+    depends_on:
+      - db
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8082:8080"
+    restart: unless-stopped
+  node-exporter:
+    image: prom/node-exporter:latest
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points="^/(sys|proc|dev)($|/)"'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+    pid: "host"
+
+# Option Windows: si ton environnement est Windows natif (non WSL2) et tu veux exporter
+# métriques système depuis l'hôte Windows via Docker, utilise windows_exporter.
+# Attention : windows_exporter nécessite Windows containers ou installation sur l'hôte.
+# Exemple (commenté) :
+# windows_exporter:
+#   image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+#   # REMARQUE: il n'existe pas d'image Windows officielle universelle dans ce compose.
+#   # Il est recommandé d'installer windows_exporter sur l'hôte Windows ou via un conteneur Windows.
+
+volumes:
+  grafana-data:

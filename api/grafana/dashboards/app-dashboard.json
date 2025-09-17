@@ -1,0 +1,27 @@
+{
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "type": "graph",
+      "title": "HTTP Requests (rps)",
+      "targets": [ { "expr": "sum(rate(http_server_requests_seconds_count{job=\"quarkus\"}[1m])) by (uri)", "legendFormat": "{{uri}}" } ],
+      "id": 1
+    },
+    {
+      "type": "graph",
+      "title": "Request latency p95 (s)",
+      "targets": [ { "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"quarkus\"}[5m])) by (le, uri))", "legendFormat": "{{uri}}" } ],
+      "id": 2
+    },
+    {
+      "type": "graph",
+      "title": "5xx Errors (rps)",
+      "targets": [ { "expr": "sum(rate(http_server_requests_seconds_count{job=\"quarkus\",status=~\"5..\"}[1m])) by (uri)", "legendFormat": "{{uri}}" } ],
+      "id": 3
+    }
+  ],
+  "title": "Application Overview",
+  "schemaVersion": 16,
+  "version": 1
+}
+

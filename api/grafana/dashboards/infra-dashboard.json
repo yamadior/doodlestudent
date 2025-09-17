@@ -1,0 +1,55 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "graph",
+      "title": "CPU Usage (%)",
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "graph",
+      "title": "Memory Usage (%)",
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "graph",
+      "title": "Disk Usage (%) (root)",
+      "targets": [
+        {
+          "expr": "(node_filesystem_size_bytes{mountpoint=\"/\"} - node_filesystem_avail_bytes{mountpoint=\"/\"}) / node_filesystem_size_bytes{mountpoint=\"/\"} * 100",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "id": 3
+    },
+    {
+      "type": "graph",
+      "title": "Network Receive (bytes/s)",
+      "targets": [
+        {
+          "expr": "sum by (instance, device) (rate(node_network_receive_bytes_total[5m]))",
+          "legendFormat": "{{instance}} {{device}}"
+        }
+      ],
+      "id": 4
+    }
+  ],
+  "title": "Infrastructure Overview",
+  "schemaVersion": 16,
+  "version": 1
+}
+
